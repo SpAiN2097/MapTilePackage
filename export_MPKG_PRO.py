@@ -1,28 +1,35 @@
+# -*- #################
+# ---------------------------------------------------------------------------
+# export_MPKG_PRO.py
+# Created on: 2016-04-06
+# Author: Vitor França (vitor.franca@ibge.gov.br)
+# Description: Create tile packages for IBGE data collection using "ArcGIS Runtime/Android SDK" enabled mobile devices.
+# ---------------------------------------------------------------------------
 import arcpy, os
 from arcpy import mp
 
-project = arcpy.mp.ArcGISProject("CURRENT")
-map = project.listMaps("MSR") [0]
+prj = arcpy.mp.ArcGISProject("CURRENT")
+map = prj.listMaps() [0]
+lyr = map.listLayers("T_LM_SETORES")[0]
+lyt = prj.listLayouts()[0]
+mf = lyt.listElements()[0]
 
 # Cursor para acessar tabela de setores 
-# for row in arcpy.SearchCursor(r"Database Connections\wsqlprd10v.vitor.sde\geodatabase." + r'"IBGE\VITOR"' + ".T_LM_SETORES"):
-for row in arcpy.SearchCursor(r"G:\BaseTerritorial\Atendimentos\2PP_CensoAgro\SaoMiguelArcanjo\LimitesSetoresPP.shp"):
-	map.extent = row.SHAPE.extent # ajusta a extensao do dataframe a extensao do setor
-	# map.scale = map.scale * 1.1 # ajusta a escala para dar uma margem maior ao setor no mapa
-	# arcpy.RefreshActiveView()
-	geocodigo =  row.getValue("cd_geocodi")
-	project.save()
-	print("Salvando pacote de mapa do setor  " + geocodigo)
-	if row.getValue("cd_situaca") == "8":
-		arcpy.CreateMapTilePackage_management( project, "ONLINE", "G:/BaseTerritorial/Atendimentos/2PP_CensoAgro/MapTilePackages/" + geocodigo + ".tpk", "JPEG", "18", "#", "Teste para a Segunda Prova Piloto do Censo Agropecuário. Tile Package com mapa do setor", "Censo Agropecuário, IBGE, teste")
-	else:
+for row in arcpy.SearchCursor(lyr):
+	geocodigo =  row.getValue("cd_geocodigo")
+	if row.getValue("cd_situacao") == "8":
 		print("Salvando pacote de mapa do setor  " + geocodigo)
-		arcpy.CreateMapTilePackage_management( project, "ONLINE", "G:/BaseTerritorial/Atendimentos/2PP_CensoAgro/MapTilePackages/" + geocodigo + ".tpk", "JPEG", "20", "#", "Teste para a Segunda Prova Piloto do Censo Agropecuário. Tile Package com mapa do setor", "Censo Agropecuário, IBGE, teste")
-		
-		
-# Runtime error 
-# Traceback (most recent call last):
-  # File "<string>", line 19, in <module>
-  # File "c:\program files (x86)\arcgis\desktop10.2\arcpy\arcpy\management.py", line 7170, in CreateMapTilePackage
-    # raise e
-# RuntimeError: Object: Error in executing tool
+		map.name = "Setor_" + geocodigo
+		output_package =  r"G:\BaseTerritorial\MapTilePackages\mapa_setor_" + geocodigo + ".tpk"
+		# ajusta a escala para dar uma margem maior ao setor no mapa
+		extent = row.getValue("SHAPE").extent 
+		mf.camera.setExtent(extent) 
+		mf.camera.scale = mf.camera.scale * 1.1
+		prj.save()
+		print (extent.JSON)
+		arcpy.CreateMapTilePackage_management(map.name, "ONLINE", output_package, "JPEG", "15", "#", "Prova de Conceito para geração automática de pacotes de mapa para o Censo Agropecuário" , "Censo Agropecuário, IBGE, teste")
+	else:
+		print("Pulando setor  " + geocodigo)
+		# print (extent.JSON)
+		# arcpy.CreateMapTilePackage_management(map, "ONLINE", "G:/BaseTerritorial/Atendimentos/2PP_CensoAgro/MapTilePackages/" + geocodigo + ".tpk", "JPEG", "20", "#", "Teste para a Segunda Prova Piloto do Censo Agropecuário. Tile Package com mapa do setor", "Censo Agropecuário, IBGE, teste")
+	

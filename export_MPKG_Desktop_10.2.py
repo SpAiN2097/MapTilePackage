@@ -21,6 +21,3 @@ for row in arcpy.SearchCursor(layer):
 	print("Imprimindo mapa  " + pdf_name)
 	arcpy.mapping.ExportToPDF(mxd, pdf_name)
 	time.sleep(1) # Wait 1 Seconds
-	
-	
-	
